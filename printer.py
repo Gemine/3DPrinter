@@ -5,14 +5,16 @@ class printer:
     numberNozze = 2
     distanceBetweenNozze = 50
     future_position_one = [0,0]
-    future_position_two = [600,600]
-    distance = 10
+    future_position_two = [400,400]
+    current_position_one = [0,0]
+    current_position_two = [400,400]
+    distance = 400
     X_distance = 0
     Y_distance = 0
     Gcode_1 = ""
     Gcode_2 = ""
-    line_Num_One = 4
-    line_Num_Two = 4
+    line_Num_One = 0
+    line_Num_Two = 0
     def __init__(self,numberNozze):
         print("Start")
     
@@ -32,7 +34,7 @@ class printer:
             return int(s)
         except ValueError:
             return float(s)
-    def getPosition(self):
+    def get_Future_Position(self):
         self.getGcode(self.line_Num_One,self.line_Num_Two)
         Gcode1 = re.split("\s",self.Gcode_1)
         Gcode2 = re.split("\s",self.Gcode_2)
@@ -50,10 +52,10 @@ class printer:
                 self.future_position_two[1] = self.num(Gcode2[2][1:])
         print(self.future_position_one)
         print(self.future_position_two)
-    def caculateDistance(self):
+    def caculateFutureDistance(self):
         #caculate distance between future_position_one and future_position_two
         #d = sqrt(x^2 +y^2)
-        self.getPosition()
+        self.get_Future_Position()
         self.X_distance = self.future_position_one[0] - self.future_position_two[0]
         self.Y_distance = self.future_position_one[1] - self.future_position_two[1]
         self.distance = math.sqrt((self.X_distance*self.X_distance+self.Y_distance*self.Y_distance))
@@ -62,14 +64,16 @@ class printer:
         f.write(str(self.distance)+"\n")
         f.close()
     def sendGcodeToMachine(self):
-        #Sending
-        print("Send "+ self.Gcode_1 +" to machine 1")
-        print("Send "+ self.Gcode_2 +" to machine 2")
+        #check status of machine, if "ok" then send
+        if statusMachineOne == "done" and statusMachineTwo == "done":
+            #Send Gcode
+            print("Send "+ self.Gcode_1 +" to machine 1")
+            print("Send "+ self.Gcode_2 +" to machine 2")
         #check respond from machine 1
-        #resFromOne = input("Res from one: ")
+        #and update status of machine
         resFromOne = "ok"
         #check respond from machine 2
-        #resFromTwo = input("Res from two: ")
+        #and update status of machine
         resFromTwo = "ok"
         #if respond OK:
         #update new Gcode to file data1 and data2
@@ -82,13 +86,17 @@ class printer:
         print("Current machine two line: " + str(self.line_Num_Two))
 
     def control(self):
-        self.caculateDistance()
+        self.caculateFutureDistance()
         if self.distance <= self.distanceBetweenNozze:
             #stop nozze 1
             self.Gcode_1 = "M0\n"
             print(self.Gcode_1)
             #continue nozze 2
             print(self.Gcode_2)
+            #update distance
             self.sendGcodeToMachine()
         else: 
             self.sendGcodeToMachine()
+        #update real distance
+
+
