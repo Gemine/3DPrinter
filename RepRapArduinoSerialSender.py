@@ -124,7 +124,7 @@ class RepRapArduinoSerialSender:
 				print ("< " + str(response))
 
 
-	def close():
+	def close(self):
 		"""
 			Closes the serial port, terminating communications with the arduino.
 		"""
