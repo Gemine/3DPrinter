@@ -97,7 +97,7 @@ class RepRapArduinoSerialSender:
 			return
 
 		self.ser.write(block.encode() + b"\n")
-		self.read("OK")
+		self.read("ok")
 
 	def read(self, expect=None):
 		"""
@@ -115,13 +115,13 @@ class RepRapArduinoSerialSender:
 			if expect is None:
 				return
 
-			if expect.lower() in response.lower():
+			if expect.lower() in str(response.lower()):
 				if self._verbose:
-					print ("< " + response)
+					print ("< " + str(response))
 				return
 			else:
 				#Just print the response since it is useful data or an error message
-				print ("< " + response)
+				print ("< " + str(response))
 
 
 	def close():
@@ -134,7 +134,8 @@ class RepRapArduinoSerialSender:
 		if self._verbose:
 			print >> sys.stdout, "Serial Open?: " + str(self.ser.isOpen())
 
-sender = RepRapArduinoSerialSender('COM3',9600)
-x = "G1 X10 Y10"
-
-sender.write(x)
+sender = RepRapArduinoSerialSender('COM8',115200)
+x = "G28"
+sender.read('M301')
+sender.write('G28')
+sender.write('G1 Z10')
