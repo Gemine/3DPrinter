@@ -45,12 +45,16 @@ twoPrinter.getFirstFriendPrinter(onePrinter)
 
 #Connect One Printer
 onePrinter.connectToPrinter()
-
+print("connect one ok")
 #Connect Two Printer
 twoPrinter.connectToPrinter()
+print("connect two ok")
 
+onePrinter.sendGcode('G28')
+twoPrinter.sendGcode('G28')
 # onePrinter.start()
 # twoPrinter.start()
+
 
 # onePrinter.join()
 # twoPrinter.join()
