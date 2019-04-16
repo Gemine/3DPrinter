@@ -50,14 +50,14 @@ class serialSendGcode:
 		self._verbose = verbose
 
 		if self._verbose:
-			print >> sys.stdout, "Opening serial port: " + port
+			print ("Opening serial port: ",port)
 
 		#Timeout value 10" max travel, 1RPM, 20 threads/in = 200 seconds
 		self.ser = serial.Serial(port, baud, timeout=200)
 
 		if self._verbose:
-			print >> sys.stdout, "Serial Open?: " + str(self.ser.isOpen())
-			print >> sys.stdout, "Baud Rate: " + str(self.ser.baudrate)
+			print ("Serial Open?: " + str(self.ser.isOpen()))
+			print ("Baud Rate: " + str(self.ser.baudrate))
 
 	def reset(self):
 		"""
@@ -97,6 +97,7 @@ class serialSendGcode:
 			return
 
 		self.ser.write(block.encode() + b"\n")
+		#time.sleep(5)
 		self.read("ok")
 
 	def read(self, expect=None):
@@ -119,6 +120,7 @@ class serialSendGcode:
 				if self._verbose:
 					print ("< " + str(response))
 				return
+				
 			else:
 				#Just print the response since it is useful data or an error message
 				print ("< " + str(response))
