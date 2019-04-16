@@ -121,15 +121,15 @@ class virtualPrinter(threading.Thread):
 		pass
 	
 	def connectToPrinter(self):
-		self.connection = serialSendGcode(self.port,self.baudrate)
+		self.connection = serialSendGcode(self.port,self.baudrate,True)
 		#wait for 5 second
-		time.sleep(5)
+		self.connection.read('M301')
 	
 	def sendGcode(self,Gcode):
 		# Write Gcode to machine
 		self.connection.write(Gcode)
 		#wait respond "ok"
-		self.connection.read("ok")
+		#self.connection.read("ok")
 
 	def isPrioritysitutation(self):
 		pass
