@@ -44,6 +44,9 @@ class virtualPrinter(threading.Thread):
 	"""
 	################### virtualPrinter Variable ######################
 	dirGcodeFile = ""
+	gcodeData = []
+	gcodeDataLen = 0
+	numberOfGcodeLine = 0
 	orderGcodeLine = 0
 	gCodeRecive = ""
 	gCodeSend = ""
@@ -69,14 +72,17 @@ class virtualPrinter(threading.Thread):
 	#def getGcodeFileDir(self,filedir):
 		#self.dirGcodeFile = filedir
 		#print("Gcode file is in: " + self.dirGcodeFile)
-
-	def getGcodeLine(self):
+	def getGcodeData(self):
 		try:
 			file = open(self.dirGcodeFile)
-			gcodeData = file.readlines()
-			self.gCodeRecive = gcodeData[self.orderGcodeLine]
+			self.gcodeData = file.readlines()
+			self.gcodeDataLen = len(self.gcodeData)
+			file.close()
 		except:
 			print("Some thing went wrong with read file")
+	def getGcodeLine(self):
+		self.gCodeRecive = self.gcodeData[self.orderGcodeLine]
+
 
 	def num(self,s):
 		try:
@@ -84,6 +90,8 @@ class virtualPrinter(threading.Thread):
 		except ValueError:
 			return float(s)
 
+	def getNumberOfGcodeLine(self):
+		pass
 	def getPositionFromGcodeRecive(self):
 		try:
 			Gcode = re.split(r"\s",self.gCodeRecive)
@@ -103,7 +111,7 @@ class virtualPrinter(threading.Thread):
 		return [X_distance,Y_distance]
 	def checkCollision(self,distanceXY):
 		result = False
-		if distanceXY[1] < 50:
+		if distanceXY[1] < 70:
     			result = True
 		return result
 	def updateCurrentPosition(self,position):
@@ -117,19 +125,23 @@ class virtualPrinter(threading.Thread):
 	def pause(self):
 		#send Gcode pause
 		pass
-	def parkingAndComeBack(self):
+	def parking(self):
+		# M125 or M27
+		self.sendGcode("G27")
 		pass
 	
+	def comeBack(self):
+		self.sendGcode("G0 ")
 	def connectToPrinter(self):
-		self.connection = serialSendGcode(self.port,self.baudrate,True)
+		self.connection = serialSendGcode(self.port,self.baudrate)
 		#wait for 5 second
-		self.connection.read('M301')
+		time.sleep(5)
 	
 	def sendGcode(self,Gcode):
 		# Write Gcode to machine
 		self.connection.write(Gcode)
 		#wait respond "ok"
-		#self.connection.read("ok")
+		self.connection.read("ok")
 
 	def isPrioritysitutation(self):
 		pass
@@ -147,9 +159,6 @@ class virtualPrinter(threading.Thread):
 		#send Stop Gcode
 		pass
 	
-	def comeBack(self):
-		pass
-
 	def emitPriorityEvent(self):
 		pass
 
@@ -165,10 +174,12 @@ class typeOnePrinter(virtualPrinter):
 	priority = False
 	currentPosition = [200,200]
 	dirGcodeFile = ""
+	gcodeData = []
+	gcodeDataLen = 0
 	orderGcodeLine = 0
 	gCodeRecive = ""
 	gCodeSend = ""
-	PositionFromGcodeRecive = [0,0]
+	PositionFromGcodeRecive = currentPosition
 	connection = None
 	port = "COM7"
 	baudrate = 115200
@@ -200,16 +211,14 @@ class typeOnePrinter(virtualPrinter):
 		pass
 	def run(self):
 		# check priority situation
-		while self.orderGcodeLine < 20:
+		while self.orderGcodeLine < self.gcodeDataLen:
 			#start lock
 			lockOne.acquire()
 			if self.isPrioritysitutation(priorityEvent.is_set()):
 				#if priority situation is true
 				#Run in priority process
-				print("1 ---Priority process")
-				#go to priority
-				print("1 ---machine going to priority position in 1 second")
-				time.sleep(1)
+				print("Run in priority process")
+				self.parking()
 				#emit gone to priority envent
 				reachPriorityPosition.set()
 				lockOne.release()
@@ -217,6 +226,7 @@ class typeOnePrinter(virtualPrinter):
 				lockOne.acquire()
 				#Comeback
 				print("1 ---machine 1 comeback")
+				self.sendGcode("G0 X{} Y{}".format(self.currentPosition[0],self.currentPosition[1]))
 				#clear comeback event
 				comeBackEvent.clear()
 				lockOne.release()
@@ -251,6 +261,8 @@ class typeOnePrinter(virtualPrinter):
 					lockOne.release()
 					#run normal process
 					print("1 ---Running in normal process")
+
+					
 					#send Gocde to machine
 					self.sendGcode(self.gCodeRecive)
 					#increase Gcode line number
@@ -261,12 +273,14 @@ class typeOnePrinter(virtualPrinter):
 
 class typeTwoPrinter(virtualPrinter):
 	################### typeOnePrinter Variable ######################
-	currentPosition = [1,1]
+	currentPosition = [0,0]
 	dirGcodeFile = ""
+	gcodeData = []
+	gcodeDataLen = 0
 	orderGcodeLine = 0
 	gCodeRecive = ""
 	gCodeSend = ""
-	PositionFromGcodeRecive = [0,0]
+	PositionFromGcodeRecive = currentPosition
 	connection = None
 	port = "COM8"
 	baudrate = 115200
@@ -281,7 +295,7 @@ class typeTwoPrinter(virtualPrinter):
 		
 	def run(self):
 		#read n-th Gcode Line in file
-			while self.orderGcodeLine < 20:
+			while self.orderGcodeLine < self.gcodeDataLen:
 				#start lock
 				lockOne.acquire()
 				self.getGcodeLine()
@@ -301,9 +315,13 @@ class typeTwoPrinter(virtualPrinter):
 						lockOne.release()
 						# check whether machine one gone to priority position
 						reachPriorityPosition.wait()
+						
 						self.updateCurrentPosition(self.PositionFromGcodeRecive)
 						print("2 ---Two gcode Sended",self.PositionFromGcodeRecive)
 						#send gcode
+						self.sendGcode(self.gCodeRecive)
+						
+						#increase order gcode line
 						self.increaseOrderGcodeLine()
 						
 						#start lock
@@ -319,9 +337,11 @@ class typeTwoPrinter(virtualPrinter):
 					# update curent position machine 2
 					self.updateCurrentPosition(self.PositionFromGcodeRecive)
 					priorityEvent.clear()
+					#realease lock
 					lockOne.release()
 					#send Gcode
 					print("2 ---Machine 2 is running to ",self.currentPosition)
+					self.sendGcode(self.gCodeRecive)
 					#increase Gcode number line
 					self.increaseOrderGcodeLine()
 					#emit comeback event
@@ -336,5 +356,6 @@ class typeTwoPrinter(virtualPrinter):
 					#run normal process
 					print("2 ---Running in normal process")
 					#send Gocde to machine
+					self.sendGcode(self.gCodeRecive)
 					#increase Gcode line number
 					self.increaseOrderGcodeLine()
