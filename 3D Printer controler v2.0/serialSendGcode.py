@@ -131,7 +131,7 @@ class serialSendGcode:
 			Closes the serial port, terminating communications with the arduino.
 		"""
 		if self._verbose:
-			print >> sys.stdout, "Closing serial port."
+			print("Closing serial port.") 
 		self.ser.close()
 		if self._verbose:
-			print >> sys.stdout, "Serial Open?: " + str(self.ser.isOpen())
+			print ("Serial Open?: " + str(self.ser.isOpen()))
