@@ -124,6 +124,7 @@ class serialSendGcode:
 			else:
 				#Just print the response since it is useful data or an error message
 				print ("< " + str(response))
+			time.sleep(1)
 
 
 	def close(self):
