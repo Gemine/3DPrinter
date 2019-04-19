@@ -8,7 +8,7 @@ for i in range(0):
     printerOne.getGcodeLine()
     printerOne.getPositionFromGcodeRecive()
     print(printerOne.PositionFromGcodeRecive)
-    a = printerOne.caculateDistanceToPoint([0,0])
+    a = printerOne.caculateDistanceToPoint([0,0]) 
     b = printerOne.checkCollision(a)
     if not b :
         printerOne.updateCurrentPosition(printerOne.PositionFromGcodeRecive)
@@ -30,7 +30,7 @@ baudrateOne = 115200
 #Name for Printer 2
 nameTwo = "twoPrinter"
 # Gcode file direction
-gcodeTwoDir = "Gcode/two"
+gcodeTwoDir = "two"
 # Serial connection port and baudrate
 portTwo = 'COM8'
 baudrateTwo = 115200
@@ -40,23 +40,25 @@ baudrateTwo = 115200
 onePrinter = virtualPrinter.typeOnePrinter(nameOne,gcodeOneDir,portOne,baudrateOne)
 twoPrinter = virtualPrinter.typeTwoPrinter(nameTwo,gcodeTwoDir,portTwo,baudrateTwo)
 
+#get gcode data 
+onePrinter.getGcodeData()
+twoPrinter.getGcodeData()
+
+
+
 onePrinter.getFirstFriendPrinter(twoPrinter)
 twoPrinter.getFirstFriendPrinter(onePrinter)
 
 #Connect One Printer
-onePrinter.connectToPrinter()
-print("connect one ok")
+#onePrinter.connectToPrinter()
+
 #Connect Two Printer
-twoPrinter.connectToPrinter()
-print("connect two ok")
+#twoPrinter.connectToPrinter()
 
-onePrinter.sendGcode('G28')
-twoPrinter.sendGcode('G28')
-# onePrinter.start()
-# twoPrinter.start()
+onePrinter.start()
+twoPrinter.start()
 
-
-# onePrinter.join()
-# twoPrinter.join()
+onePrinter.join()
+twoPrinter.join()
 
 print(threading.enumerate())
